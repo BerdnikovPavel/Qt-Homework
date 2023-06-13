@@ -7,15 +7,19 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ui->pb_clearResult->setCheckable(true);
-    graphic = new QCPGraph(ui->customPlot->xAxis, ui->customPlot->yAxis);
-    ui->customPlot->setInteraction(QCP::iRangeZoom, true);
-    ui->customPlot->setInteraction(QCP::iRangeDrag, true);
+    customPlot = new QCustomPlot();
+    customPlot->setMinimumSize(400, 400);
+    customPlot->setWindowTitle("График");
+    graphic = new QCPGraph(customPlot->xAxis, customPlot->yAxis);
+    customPlot->setInteraction(QCP::iRangeZoom, true);
+    customPlot->setInteraction(QCP::iRangeDrag, true);
     connect(this, &MainWindow::sig_readyToDisplay, this, &MainWindow::DisplayGraph);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+    delete customPlot;
 }
 
 
@@ -235,16 +239,21 @@ void MainWindow::on_pb_start_clicked()
                                                 {
                                                     x[i] = x[i-1] + 0.001;
                                                 }
-                                                ui->customPlot->graph(0)->setData(x, res);
-                                                ui->customPlot->xAxis->setRange(0, 1);
-                                                double minY = res[0];
-                                                double maxY = res[0];
-                                                for(int i = 0; i<x.size(); ++i)
+                                                QVector<double> y(1000);
+                                                for(int i = 0; i< y.size(); ++i)
                                                 {
-                                                    if(res[i] < minY){minY = res[i];}
-                                                    if(res[i] > maxY){maxY = res[i];}
+                                                    y[i] = res[i];
                                                 }
-                                                ui->customPlot->yAxis->setRange(minY, maxY);
+                                                customPlot->graph(0)->setData(x, y);
+                                                customPlot->xAxis->setRange(0, 1);
+                                                double minY = y[0];
+                                                double maxY = y[0];
+                                                for(int i = 0; i<y.size(); ++i)
+                                                {
+                                                    if(y[i] < minY){minY = y[i];}
+                                                    if(y[i] > maxY){maxY = y[i];}
+                                                }
+                                                customPlot->yAxis->setRange(minY, maxY);
                                                 emit sig_readyToDisplay();
                                              };
 
@@ -258,17 +267,18 @@ void MainWindow::on_pb_start_clicked()
 
 void MainWindow::DisplayGraph()
 {
-    ui->customPlot->replot();
+    customPlot->show();
+    customPlot->replot();
 }
 
 
 void MainWindow::on_pb_clearResult_clicked()
 {
-    for(int i = 0; i <ui->customPlot->graphCount(); ++i)
+    for(int i = 0; i < customPlot->graphCount(); ++i)
     {
-        ui->customPlot->graph(i)->data()->clear();
+        customPlot->graph(i)->data()->clear();
     }
-    ui->customPlot->replot();
+    customPlot->replot();
 }
 
 

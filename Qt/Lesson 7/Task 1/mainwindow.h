@@ -59,7 +59,7 @@ private:
     QVector<double> procesData;
     QVector<double> mins, maxs;
     QCPGraph* graphic;
-    QCustomPlot* cpg;
+    QCustomPlot* customPlot;
 
 };
 #endif // MAINWINDOW_H
