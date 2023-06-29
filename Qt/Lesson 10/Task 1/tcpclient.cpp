@@ -21,7 +21,6 @@ QDataStream &operator <<(QDataStream &in, ServiceHeader &data){
     in << data.idData;
     in << data.status;
     in << data.len;
-
     return in;
 }
 QDataStream &operator >> (QDataStream &out, StatServer &stat){
@@ -32,11 +31,8 @@ QDataStream &operator >> (QDataStream &out, StatServer &stat){
     out >> stat.sendPck;
     out >> stat.workTime;
     out >> stat.clients;
-
     return out;
 }
-
-
 
 /*
  * Поскольку мы являемся клиентом, инициализацию сокета
@@ -151,11 +147,7 @@ void TCPclient::ReadyReed()
                 }
             }
         }
-        if(servHeader.status != 1)
-        {
-            emit sig_Error(servHeader.status);
-            return;
-        }
+
         //Если получены не все данные, то выходим из обработчика. Ждем новую посылку
         if(socket->bytesAvailable() < servHeader.len){
             return;
@@ -202,10 +194,18 @@ void TCPclient::ProcessingData(ServiceHeader header, QDataStream &stream)
         break;
     }
     case SET_DATA:{
-        QString msg;
-        stream >> msg;
-        emit sig_SendReplyForSetData(msg);
-        break;
+        if(header.status == STATUS_SUCCES)
+        {
+            QString msg;
+            stream >> msg;
+            emit sig_SendReplyForSetData(msg);
+            break;
+        }
+        else
+        {
+            emit sig_Error(header.status);
+            break;
+        }
     }
     case CLEAR_DATA:{
         emit sig_Success(header.idData);
@@ -213,6 +213,5 @@ void TCPclient::ProcessingData(ServiceHeader header, QDataStream &stream)
     }
     default:
             return;
-
     }
 }
