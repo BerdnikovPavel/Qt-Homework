@@ -188,6 +188,7 @@ void MainWindow::on_pb_request_clicked()
    case 3: {
        header.idData = SET_DATA;
        QString msg = ui->le_data->text();
+       header.len = sizeof(msg);
        client->SendData(header, msg);
        break;
    }
