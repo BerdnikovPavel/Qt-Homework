@@ -13,12 +13,21 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="layoutDirection">
+   <enum>Qt::LeftToRight</enum>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="1" column="2">
      <widget class="QGroupBox" name="gb_commands">
       <property name="title">
-       <string>GroupBox</string>
+       <string>Команды</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+      <property name="flat">
+       <bool>false</bool>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
@@ -41,7 +50,10 @@
     <item row="0" column="2">
      <widget class="QGroupBox" name="groupBox">
       <property name="title">
-       <string>GroupBox</string>
+       <string>Выбор аэропорта и даты вылета</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
@@ -52,8 +64,16 @@
        </item>
        <item>
         <widget class="QGroupBox" name="gb_direction">
+         <property name="font">
+          <font>
+           <bold>false</bold>
+          </font>
+         </property>
          <property name="title">
-          <string>GroupBox</string>
+          <string>Направление вылетов </string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>

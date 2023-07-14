@@ -7,7 +7,7 @@
 #include <QSqlDataBase>
 #include <QSqlError>
 #include <QSqlQuery>
-#include <QSqlTableModel>
+//#include <QSqlTableModel>
 #include <QSqlQueryModel>
 #include <QMessageBox>
 
@@ -16,8 +16,11 @@
 #define NUM_DATA_FOR_CONNECT_TO_DB 5
 
 enum requestType{
-    requestArrival = 1,
-    requestDeparture   = 2
+    requestListOfAirports = 1,
+    requestArrival = 2,
+    requestDeparture   = 3,
+    requestWorkloadPerYear = 4,
+    requestWorkloadPerMonth = 5
 };
 
 
@@ -30,26 +33,25 @@ public:
     ~DataBase();
 
     void AddDataBase(QString driver, QString nameDB = "");
-    void DisconnectFromDataBase(QString nameDb = "");
-    void RequestListOfAirports(QString request);
-    void ReadAnswerFromDB(int answerType);
-    QSqlError GetLastError(void);
     void ConnectToDataBase();
+    void DisconnectFromDataBase(QString nameDb = "");
+    QSqlError GetLastError(void);
     bool get_StatusConnection();
-    void RequestListOfFlights(QString request, int requestType);
+    void RequestToDB(QString request, int requestType);
 
 signals:
-    void sig_SendDataFromDB_ListOfFlights(QSqlQueryModel *model);
-    //void sig_SendStatusConnection(bool);
-    //void sig_SendStatusRequest(QSqlError err);
+    void sig_SendListOfFlights(QSqlQueryModel *model);
     void sig_SendListOfAirports(QMap<QString, QString> airports);
+    void sig_SendWorkloadPerYear(QVector<double>flightsCount);
+    void sig_SendWorkloadPerMonth(QMap<QString, int> flightsPerDay);
+
+
 
 private:
     QSqlDatabase* db;
     QSqlQueryModel* queryModel;
     QSqlQuery* simpleQuery;
     QMessageBox *msg;
-
 };
 
 #endif // DATABASE_H

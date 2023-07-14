@@ -18,6 +18,9 @@ set(PROJECT_SOURCES
         mainwindow.ui
         database.h
         database.cpp
+        workloadwindow.h
+        workloadwindow.cpp
+        workloadwindow.ui
 )
 
 add_executable(Qt_Coursework
