@@ -7,8 +7,9 @@
 #include <QSqlDataBase>
 #include <QSqlError>
 #include <QSqlQuery>
-//#include <QSqlTableModel>
 #include <QSqlQueryModel>
+#include <QTimer>
+#include <QThread>
 #include <QMessageBox>
 
 #define POSTGRE_DRIVER "QPSQL"
@@ -45,7 +46,9 @@ signals:
     void sig_SendWorkloadPerYear(QVector<double>flightsCount);
     void sig_SendWorkloadPerMonth(QMap<QString, int> flightsPerDay);
 
-
+public slots:
+    void RequestGeneration(QString date, QString airportCode, int requestType);
+    void RequestGeneration(QString airportCode, int requestType);
 
 private:
     QSqlDatabase* db;

@@ -26,12 +26,63 @@ void DataBase::ConnectToDataBase()
     db->setUserName("netology_usr_cp");
     db->setPassword("CppNeto3");
     db->setPort(5432);
-    db->open();
+    bool statusConnection = db->open();
+    if(!statusConnection)
+    {
+        this->DisconnectFromDataBase(DB_NAME);
+        msg->setIcon(QMessageBox::Critical);
+        msg->setText(this->GetLastError().text());
+        msg->exec();
+        msg->setModal(true);
+        QThread::msleep(5000);
+        //QTimer::singleShot(5000, this, &DataBase::ConnectToDataBase);
+        this->ConnectToDataBase();
+    }
 }
 
 bool DataBase::get_StatusConnection()
 {
     return db->isOpen();
+}
+
+void DataBase::RequestGeneration(QString date, QString airportCode, int requestType)
+{
+    QString request;
+    if(requestType == requestArrival)
+    {
+        request = "SELECT flight_no, scheduled_arrival, ad.airport_name->>'ru' as Name from bookings.flights f "
+                  "JOIN bookings.airports_data ad on ad.airport_code = '" + QString(airportCode) +
+                  "' where f.arrival_airport  = '" + QString(airportCode) + "' and "
+                  "f.scheduled_arrival::date = '" + QString(date) + "'";
+    }
+    if(requestType == requestDeparture)
+    {
+        request = "SELECT flight_no, scheduled_departure, ad.airport_name->>'ru' as Name from bookings.flights f "
+                  "JOIN bookings.airports_data ad on ad.airport_code = '" + QString(airportCode) +
+                  "' WHERE f.departure_airport  = '" + QString(airportCode) + "' and "
+                  "f.scheduled_departure::date = '" + QString(date) + "'";
+    }
+    this->RequestToDB(request, requestType);
+}
+
+void DataBase::RequestGeneration(QString airportCode, int requestType)
+{
+    QString request;
+    if(requestType == requestWorkloadPerYear)
+    {
+        request  = "SELECT count(flight_no), date_trunc('month', scheduled_departure) as Month from bookings.flights f "
+                   "WHERE (scheduled_departure::date > date('2016-08-31') and scheduled_departure::date <= date('2017-08-31')) "
+                   "and ( departure_airport = '" + QString(airportCode) + "' or arrival_airport = '"
+                   + QString(airportCode) + "') group by Month";
+    }
+    if(requestType == requestWorkloadPerMonth)
+    {
+        request = "SELECT count(flight_no), date_trunc('day', scheduled_departure) as Day from bookings.flights f "
+                  "WHERE(scheduled_departure::date > date('2016-08-31') and scheduled_departure::date <= date('2017-08-31')) "
+                  "and ( departure_airport = '" + QString(airportCode) + "' or arrival_airport = '"
+                  + QString(airportCode) + "') GROUP BY Day";
+    }
+    this->RequestToDB(request, requestType);
 }
 
 void DataBase::RequestToDB(QString request, int requestType)
@@ -98,7 +149,6 @@ void DataBase::RequestToDB(QString request, int requestType)
         msg->setText(simpleQuery->lastError().text());
         msg->show();
     }
-
 }
 
 void DataBase::DisconnectFromDataBase(QString nameDb)

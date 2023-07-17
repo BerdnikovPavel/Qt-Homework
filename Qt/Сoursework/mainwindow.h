@@ -26,6 +26,10 @@ public slots:
 signals:
     void sig_connectToDB();
     void sig_SendAirportName(QString airportName);
+
+    void sig_sendReqListOfFlights(QString date, QString airportCode, int requestType);
+    void sig_sendReqWorkload(QString airportCode, int requestType);
+
 private slots:
     void on_pb_getListOfFlights_clicked();
     void on_pb_getWorkload_clicked();

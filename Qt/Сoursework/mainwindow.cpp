@@ -13,13 +13,13 @@ MainWindow::MainWindow(QWidget *parent)
 
     dataBase = new DataBase(this);
     msg = new QMessageBox(this);
-    timer = new QTimer(this);
+    //timer = new QTimer(this);
     wlWindow = new WorkloadWindow(this);
     wlWindow->setWindowTitle("Загруженность аэропорта");
 
-    connect(msg, &QMessageBox::accepted, this, [&](){
-        timer->singleShot(5000, dataBase, &DataBase::ConnectToDataBase);
-    });
+//    connect(msg, &QMessageBox::accepted, this, [&](){
+//        timer->singleShot(5000, dataBase, &DataBase::ConnectToDataBase);
+//    });
 
     connect(dataBase, &DataBase::sig_SendListOfAirports, this, [&](QMap<QString, QString> ap){
         airports = ap;
@@ -38,6 +38,9 @@ MainWindow::MainWindow(QWidget *parent)
         ui->tv_flights->show();
     });
 
+    connect(this, &MainWindow::sig_sendReqListOfFlights, dataBase, qOverload<QString, QString, int>(&DataBase::RequestGeneration));
+    connect(this, &MainWindow::sig_sendReqWorkload, dataBase, qOverload<QString, int>(&DataBase::RequestGeneration));
+
     dataBase->AddDataBase(POSTGRE_DRIVER, DB_NAME);
     dataBase->ConnectToDataBase();
     if(dataBase->get_StatusConnection())
@@ -45,15 +48,17 @@ MainWindow::MainWindow(QWidget *parent)
         ui->lb_statusConnect->setText("Подключено к БД");
         ui->lb_statusConnect->setStyleSheet("color:green");
     }
-    else
-    {
-        dataBase->DisconnectFromDataBase(DB_NAME);
-        msg->setIcon(QMessageBox::Critical);
-        msg->setText(dataBase->GetLastError().text());
-        ui->lb_statusConnect->setText("Отключено");
-        ui->lb_statusConnect->setStyleSheet("color:red");
-        msg->exec();
-    }
+//    else
+//    {
+//        dataBase->DisconnectFromDataBase(DB_NAME);
+//        msg->setIcon(QMessageBox::Critical);
+//        msg->setText(dataBase->GetLastError().text());
+//        ui->lb_statusConnect->setText("Отключено");
+//        ui->lb_statusConnect->setStyleSheet("color:red");
+//        msg->setModal(true);
+//        msg->exec();
+//        QTimer::singleShot(5000, dataBase, &DataBase::ConnectToDataBase);
+//    }
 
     if(dataBase->get_StatusConnection())
     {
@@ -79,46 +84,27 @@ MainWindow::~MainWindow()
 void MainWindow::on_pb_getListOfFlights_clicked()
 {
     QString date = ui->de_date->date().toString();
-    QString airportName = ui->cb_listOfAirports->currentText();
+    QString airportCode = airports.value(ui->cb_listOfAirports->currentText());
     if(ui->rb_arrival->isChecked())
     {
         int reqType = requestArrival;
-        QString reqArrival = "SELECT flight_no, scheduled_arrival, ad.airport_name->>'ru' as Name from bookings.flights f "
-                             "JOIN bookings.airports_data ad on ad.airport_code = '" + QString(airports.value(airportName)) +
-                             "' where f.arrival_airport  = '" + QString(airports.value(airportName)) + "' and "
-                             "f.scheduled_arrival::date = '" + QString(date) + "'";
-        dataBase->RequestToDB(reqArrival, reqType);
+        emit sig_sendReqListOfFlights(date, airportCode, reqType);
     }
     else
     {
         int reqType = requestDeparture;
-        QString reqDeparture = "SELECT flight_no, scheduled_departure, ad.airport_name->>'ru' as Name from bookings.flights f "
-                               "JOIN bookings.airports_data ad on ad.airport_code = '" + QString(airports.value(airportName)) +
-                               "' WHERE f.departure_airport  = '" + QString(airports.value(airportName)) + "' and "
-                               "f.scheduled_departure::date = '" + QString(date) + "'";
-        dataBase->RequestToDB(reqDeparture, reqType);
+        emit sig_sendReqListOfFlights(date, airportCode, reqType);
     }
 }
 
 
 void MainWindow::on_pb_getWorkload_clicked()
 {
-    QString airportName = ui->cb_listOfAirports->currentText();
-    QString reqWorkloadPerYear = "SELECT count(flight_no), date_trunc('month', scheduled_departure) as Month from bookings.flights f "
-            "WHERE (scheduled_departure::date > date('2016-08-31') and scheduled_departure::date <= date('2017-08-31')) "
-            "and ( departure_airport = '" + QString(airports.value(airportName)) + "' or arrival_airport = '"
-            + QString(airports.value(airportName)) + "') group by Month";
-
+    QString airportCode = airports.value(ui->cb_listOfAirports->currentText());
     int reqType = requestWorkloadPerYear;
-    dataBase->RequestToDB(reqWorkloadPerYear, reqType);
-
-    QString reqWorkloadPerMonth = "SELECT count(flight_no), date_trunc('day', scheduled_departure) as Day from bookings.flights f "
-            "WHERE(scheduled_departure::date > date('2016-08-31') and scheduled_departure::date <= date('2017-08-31')) "
-            "and ( departure_airport = '" + QString(airports.value(airportName)) + "' or arrival_airport = '"
-            + QString(airports.value(airportName)) + "') GROUP BY Day";
-
+    emit sig_sendReqWorkload(airportCode, reqType);
     reqType = requestWorkloadPerMonth;
-    dataBase->RequestToDB(reqWorkloadPerMonth, reqType);
+    emit sig_sendReqWorkload(airportCode, reqType);
 }
 
 void MainWindow::DisplayWorkloadPerYear(QVector<double>flightsCount)
