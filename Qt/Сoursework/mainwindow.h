@@ -21,16 +21,14 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-public slots:
-
 signals:
     void sig_connectToDB();
     void sig_SendAirportName(QString airportName);
-
     void sig_sendReqListOfFlights(QString date, QString airportCode, int requestType);
     void sig_sendReqWorkload(QString airportCode, int requestType);
 
 private slots:
+    void ReceiveStatusConnection(bool statusConnection);
     void on_pb_getListOfFlights_clicked();
     void on_pb_getWorkload_clicked();
     void DisplayWorkloadPerYear(QVector<double> flightsCount);
@@ -45,6 +43,5 @@ private:
     QString reqAirports = "SELECT airport_name->>'ru' as airportName, airport_code FROM bookings.airports_data";
     QMap<QString, QString> airports;
     WorkloadWindow *wlWindow;
-
 };
 #endif // MAINWINDOW_H

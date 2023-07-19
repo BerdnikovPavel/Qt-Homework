@@ -8,8 +8,6 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSqlQueryModel>
-#include <QTimer>
-#include <QThread>
 #include <QMessageBox>
 
 #define POSTGRE_DRIVER "QPSQL"
@@ -24,7 +22,6 @@ enum requestType{
     requestWorkloadPerMonth = 5
 };
 
-
 class DataBase : public QObject
 {
     Q_OBJECT
@@ -37,10 +34,10 @@ public:
     void ConnectToDataBase();
     void DisconnectFromDataBase(QString nameDb = "");
     QSqlError GetLastError(void);
-    bool get_StatusConnection();
     void RequestToDB(QString request, int requestType);
 
 signals:
+    void sig_SendStatusConnection(bool statusConnection);
     void sig_SendListOfFlights(QSqlQueryModel *model);
     void sig_SendListOfAirports(QMap<QString, QString> airports);
     void sig_SendWorkloadPerYear(QVector<double>flightsCount);

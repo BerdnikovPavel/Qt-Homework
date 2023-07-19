@@ -23,26 +23,11 @@ void DataBase::ConnectToDataBase()
 {
     db->setHostName("981757-ca08998.tmweb.ru");
     db->setDatabaseName("demo");
-    db->setUserName("netology_usr_cp");
+    db->setUserName("netology_usr_cpp");
     db->setPassword("CppNeto3");
     db->setPort(5432);
     bool statusConnection = db->open();
-    if(!statusConnection)
-    {
-        this->DisconnectFromDataBase(DB_NAME);
-        msg->setIcon(QMessageBox::Critical);
-        msg->setText(this->GetLastError().text());
-        msg->exec();
-        msg->setModal(true);
-        QThread::msleep(5000);
-        //QTimer::singleShot(5000, this, &DataBase::ConnectToDataBase);
-        this->ConnectToDataBase();
-    }
-}
-
-bool DataBase::get_StatusConnection()
-{
-    return db->isOpen();
+    emit sig_SendStatusConnection(statusConnection);
 }
 
 void DataBase::RequestGeneration(QString date, QString airportCode, int requestType)
@@ -51,15 +36,15 @@ void DataBase::RequestGeneration(QString date, QString airportCode, int requestT
     if(requestType == requestArrival)
     {
         request = "SELECT flight_no, scheduled_arrival, ad.airport_name->>'ru' as Name from bookings.flights f "
-                  "JOIN bookings.airports_data ad on ad.airport_code = '" + QString(airportCode) +
-                  "' where f.arrival_airport  = '" + QString(airportCode) + "' and "
+                  "JOIN bookings.airports_data ad on ad.airport_code = f.departure_airport "
+                  "WHERE f.arrival_airport  = '" + QString(airportCode) + "' and "
                   "f.scheduled_arrival::date = '" + QString(date) + "'";
     }
     if(requestType == requestDeparture)
     {
         request = "SELECT flight_no, scheduled_departure, ad.airport_name->>'ru' as Name from bookings.flights f "
-                  "JOIN bookings.airports_data ad on ad.airport_code = '" + QString(airportCode) +
-                  "' WHERE f.departure_airport  = '" + QString(airportCode) + "' and "
+                  "JOIN bookings.airports_data ad on ad.airport_code = f.arrival_airport "
+                  "WHERE f.departure_airport  = '" + QString(airportCode) + "' and "
                   "f.scheduled_departure::date = '" + QString(date) + "'";
     }
     this->RequestToDB(request, requestType);
@@ -127,7 +112,6 @@ void DataBase::RequestToDB(QString request, int requestType)
         }
         default:
         {
-
             queryModel->setQuery(std::move(*simpleQuery));
             queryModel->setHeaderData(0, Qt::Horizontal, tr("Номер рейса"));
             queryModel->setHeaderData(1, Qt::Horizontal, tr("Время вылета"));

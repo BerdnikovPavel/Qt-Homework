@@ -13,13 +13,15 @@ MainWindow::MainWindow(QWidget *parent)
 
     dataBase = new DataBase(this);
     msg = new QMessageBox(this);
-    //timer = new QTimer(this);
+    timer = new QTimer(this);
     wlWindow = new WorkloadWindow(this);
     wlWindow->setWindowTitle("Загруженность аэропорта");
 
-//    connect(msg, &QMessageBox::accepted, this, [&](){
-//        timer->singleShot(5000, dataBase, &DataBase::ConnectToDataBase);
-//    });
+    connect(timer, &QTimer::timeout, this, [&](){
+        dataBase->ConnectToDataBase();
+    });
+
+    connect(dataBase, &DataBase::sig_SendStatusConnection, this, &MainWindow::ReceiveStatusConnection);
 
     connect(dataBase, &DataBase::sig_SendListOfAirports, this, [&](QMap<QString, QString> ap){
         airports = ap;
@@ -43,29 +45,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     dataBase->AddDataBase(POSTGRE_DRIVER, DB_NAME);
     dataBase->ConnectToDataBase();
-    if(dataBase->get_StatusConnection())
-    {
-        ui->lb_statusConnect->setText("Подключено к БД");
-        ui->lb_statusConnect->setStyleSheet("color:green");
-    }
-//    else
-//    {
-//        dataBase->DisconnectFromDataBase(DB_NAME);
-//        msg->setIcon(QMessageBox::Critical);
-//        msg->setText(dataBase->GetLastError().text());
-//        ui->lb_statusConnect->setText("Отключено");
-//        ui->lb_statusConnect->setStyleSheet("color:red");
-//        msg->setModal(true);
-//        msg->exec();
-//        QTimer::singleShot(5000, dataBase, &DataBase::ConnectToDataBase);
-//    }
-
-    if(dataBase->get_StatusConnection())
-    {
-        int reqType = requestListOfAirports;
-        dataBase->RequestToDB(reqAirports, reqType);
-        ui->cb_listOfAirports->setCurrentIndex(-1);
-    }
 
     ui->pb_getListOfFlights->setEnabled(false);
     ui->pb_getWorkload->setEnabled(false);
@@ -79,6 +58,29 @@ MainWindow::~MainWindow()
 {
     dataBase->DisconnectFromDataBase();
     delete ui;
+}
+
+void MainWindow::ReceiveStatusConnection(bool statusConnection)
+{
+    if(statusConnection)
+    {
+        ui->lb_statusConnect->setText("Подключено к БД");
+        ui->lb_statusConnect->setStyleSheet("color:green");
+
+        int reqType = requestListOfAirports;
+        dataBase->RequestToDB(reqAirports, reqType);
+        ui->cb_listOfAirports->setCurrentIndex(-1);
+    }
+    else
+    {
+        dataBase->DisconnectFromDataBase(DB_NAME);
+        msg->setIcon(QMessageBox::Critical);
+        msg->setText(dataBase->GetLastError().text());
+        ui->lb_statusConnect->setText("Отключено");
+        ui->lb_statusConnect->setStyleSheet("color:red");
+        msg->exec();
+        timer->start(5000);
+    }
 }
 
 void MainWindow::on_pb_getListOfFlights_clicked()
@@ -96,7 +98,6 @@ void MainWindow::on_pb_getListOfFlights_clicked()
         emit sig_sendReqListOfFlights(date, airportCode, reqType);
     }
 }
-
 
 void MainWindow::on_pb_getWorkload_clicked()
 {
@@ -126,4 +127,3 @@ void MainWindow::on_cb_listOfAirports_currentIndexChanged()
     ui->pb_getListOfFlights->setEnabled(true);
     ui->pb_getWorkload->setEnabled(true);
 }
-
